@@ -16,26 +16,42 @@ function filesOf(m: UIMessage | undefined): BackendFile[] {
   });
 }
 
+const TIMEOUT_MS = 120_000; // Render free tier can take ~1 min to wake up
+const MAX_ATTEMPTS = 3;
+const RETRY_STATUSES = new Set([408, 429, 502, 503, 504]);
+
 async function askBackend(message: string, files: BackendFile[] = []): Promise<string> {
-  try {
-    // Files go as base64 in `files: [{name, type, data}]`; old backends just ignore the field.
-    const res = await fetch(`${BACKEND_URL}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, files }),
-    });
-    const data = (await res.json().catch(() => null)) as Record<string, unknown> | string | null;
-    if (!res.ok) {
-      console.error("backend error", res.status, data);
-      return "Doraemon's backend had a problem answering. Please try again in a moment.";
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const last = attempt === MAX_ATTEMPTS;
+    try {
+      // Files go as base64 in `files: [{name, type, data}]`; old backends just ignore the field.
+      const res = await fetch(`${BACKEND_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, files }),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      const data = (await res.json().catch(() => null)) as Record<string, unknown> | string | null;
+      if (!res.ok) {
+        console.error("backend error", attempt, res.status, data);
+        if (!last && RETRY_STATUSES.has(res.status)) {
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+          continue;
+        }
+        return "Doraemon's backend had a problem answering. Please try again in a moment.";
+      }
+      if (typeof data === "string") return data;
+      const v = data?.['reply'] ?? data?.['response'] ?? data?.['answer'] ?? data?.['message'] ?? data?.['text'];
+      return typeof v === "string" && v.trim() ? v : JSON.stringify(data);
+    } catch (e) {
+      console.error("backend unreachable", attempt, e);
+      if (!last) {
+        await new Promise((r) => setTimeout(r, 2000 * attempt));
+        continue;
+      }
     }
-    if (typeof data === "string") return data;
-    const v = data?.['reply'] ?? data?.['response'] ?? data?.['answer'] ?? data?.['message'] ?? data?.['text'];
-    return typeof v === "string" && v.trim() ? v : JSON.stringify(data);
-  } catch (e) {
-    console.error("backend unreachable", e);
-    return "Couldn't reach Doraemon's backend. Please try again.";
   }
+  return "Couldn't reach Doraemon's backend. Please try again.";
 }
 
 
