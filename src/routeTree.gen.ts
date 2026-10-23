@@ -16,6 +16,7 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiSpeechRouteImport } from './routes/api/speech'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
+import { Route as ApiPublicKeepAliveRouteImport } from './routes/api/public/keep-alive'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const AuthenticatedChatThreadIdRoute =
     path: '/chat/$threadId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicKeepAliveRoute = ApiPublicKeepAliveRouteImport.update({
+  id: '/api/public/keep-alive',
+  path: '/api/public/keep-alive',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/speech': typeof ApiSpeechRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/api/public/keep-alive': typeof ApiPublicKeepAliveRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/speech': typeof ApiSpeechRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/api/public/keep-alive': typeof ApiPublicKeepAliveRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesById {
@@ -77,14 +85,28 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/speech': typeof ApiSpeechRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/api/public/keep-alive': typeof ApiPublicKeepAliveRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/api/chat' | '/api/speech' | '/chat/$threadId' | '/chat/'
+    | '/'
+    | '/auth'
+    | '/api/chat'
+    | '/api/speech'
+    | '/chat/$threadId'
+    | '/api/public/keep-alive'
+    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/api/chat' | '/api/speech' | '/chat/$threadId' | '/chat'
+  to:
+    | '/'
+    | '/auth'
+    | '/api/chat'
+    | '/api/speech'
+    | '/chat/$threadId'
+    | '/api/public/keep-alive'
+    | '/chat'
   id:
     | '__root__'
     | '/'
@@ -93,6 +115,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/speech'
     | '/_authenticated/chat/$threadId'
+    | '/api/public/keep-alive'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
 }
@@ -102,6 +125,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSpeechRoute: typeof ApiSpeechRoute
+  ApiPublicKeepAliveRoute: typeof ApiPublicKeepAliveRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -155,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatThreadIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/keep-alive': {
+      id: '/api/public/keep-alive'
+      path: '/api/public/keep-alive'
+      fullPath: '/api/public/keep-alive'
+      preLoaderRoute: typeof ApiPublicKeepAliveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -177,6 +208,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSpeechRoute: ApiSpeechRoute,
+  ApiPublicKeepAliveRoute: ApiPublicKeepAliveRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

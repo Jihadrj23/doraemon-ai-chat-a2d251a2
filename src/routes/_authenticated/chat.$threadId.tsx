@@ -297,6 +297,11 @@ function ChatWindow({
     },
   });
   const busy = status === "submitted" || status === "streaming";
+
+  // Wake the chat server as soon as the chat opens, so the first reply is faster.
+  useEffect(() => {
+    void fetch("https://doraemon-backend-ar3j.onrender.com/", { mode: "no-cors" }).catch(() => {});
+  }, []);
   const turnGate = useRef(createChatTurnGate());
 
   function handleSubmit(msg: PromptInputMessage) {
@@ -400,19 +405,7 @@ function ChatWindow({
               </Message>
             ))
           )}
-          {status === "submitted" && (
-            <div className="flex items-center gap-2 text-sm">
-              <img
-                src={body}
-                alt=""
-                loading="lazy"
-                width={1024}
-                height={1024}
-                className="size-8 rounded object-contain motion-safe:animate-bounce"
-              />
-              <Shimmer>Doraemon is searching his pocket…</Shimmer>
-            </div>
-          )}
+          {status === "submitted" && <WaitingIndicator />}
         </ConversationContent>
         <ConversationScrollButton className="bottom-24" />
       </Conversation>
@@ -595,6 +588,32 @@ function EmptyState({ onPick }: { onPick: (t: string) => void }) {
             {s}
           </Button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function WaitingIndicator() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const label =
+    seconds < 8
+      ? "Doraemon is searching his pocket…"
+      : seconds < 30
+        ? "Waking Doraemon up… the first reply can take up to a minute"
+        : "Almost there… thanks for waiting";
+  return (
+    <div role="status" aria-live="polite" className="flex items-center gap-3 text-sm">
+      <div className="relative size-9 shrink-0">
+        <span className="absolute inset-0 rounded-full border-2 border-muted border-t-primary motion-safe:animate-spin" />
+        <img src={body} alt="" width={1024} height={1024} className="absolute inset-1 size-7 rounded object-contain" />
+      </div>
+      <div className="flex flex-col">
+        <Shimmer>{label}</Shimmer>
+        {seconds >= 3 && <span className="text-xs text-muted-foreground">{seconds}s</span>}
       </div>
     </div>
   );
