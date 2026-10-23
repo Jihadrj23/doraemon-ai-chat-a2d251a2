@@ -1,4 +1,5 @@
 # Doraemon refinement
+- [ ] Update the FastAPI Gemini model and push the backend change — blocked: main.py/backend repository and writable GitHub access are not available in this project.
 - [x] Fix chronological alternating turns and prevent simultaneous user submissions; give saved assistant replies distinct IDs to prevent overwriting.
 - [x] Simplify composer to one clean row with attachment, text, microphone and send; verified two real turns, blocked send during response, saved reload and mobile layout.
 - [x] Verified tooltip crash is absent; chat entry and thread request failures now show a recovery screen, and retry restores saved chats.
