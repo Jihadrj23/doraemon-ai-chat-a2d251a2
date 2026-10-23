@@ -1,24 +1,60 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import face from "@/assets/doraemon-face.png";
+import body from "@/assets/doraemon-body.png";
+import { Button } from "@/components/ui/button";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Doraemon — Your AI friend from the future" },
+      {
+        name: "description",
+        content: "Ask Doraemon anything. A premium AI chat with a friendly robot cat.",
+      },
+      { property: "og:title", content: "Doraemon — Your AI friend from the future" },
+      {
+        property: "og:description",
+        content: "Ask Doraemon anything. A premium AI chat with a friendly robot cat.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 text-center">
       <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+        src={face}
+        alt=""
+        aria-hidden
+        className="watermark pointer-events-none absolute w-[140vmin] max-w-none"
       />
-    </div>
+      <img
+        src={body}
+        alt="Doraemon"
+        width={1024}
+        height={1024}
+        className="relative size-40 object-contain"
+      />
+      <h1 className="relative mt-6 font-display text-5xl font-bold tracking-tight">Doraemon</h1>
+      <p className="relative mt-3 max-w-sm text-muted-foreground">
+        Your friendly AI companion from the 22nd century. Ask anything — there's a gadget for every
+        question.
+      </p>
+      <Button
+        asChild
+        className="bg-send relative mt-8 h-12 rounded-full px-8 font-semibold text-primary-foreground transition-transform hover:scale-105"
+      >
+        <Link to="/chat">Start chatting</Link>
+      </Button>
+      <div className="relative mt-6 flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="size-2 rounded-full bg-collar" />
+        <span className="size-2 rounded-full bg-bell" />
+        <span className="size-2 rounded-full bg-primary" />
+      </div>
+    </main>
   );
 }
