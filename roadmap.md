@@ -1,4 +1,5 @@
 # Doraemon refinement
+- [ ] Audit frontend/API latency, remove avoidable request overhead, and verify a real saved chat plus keep-alive settings.
 - [ ] Update the FastAPI Gemini model and push the backend change — blocked: main.py/backend repository and writable GitHub access are not available in this project.
 - [x] Fix chronological alternating turns and prevent simultaneous user submissions; give saved assistant replies distinct IDs to prevent overwriting.
 - [x] Simplify composer to one clean row with attachment, text, microphone and send; verified two real turns, blocked send during response, saved reload and mobile layout.
