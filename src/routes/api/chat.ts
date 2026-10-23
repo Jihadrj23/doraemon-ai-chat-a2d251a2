@@ -16,7 +16,7 @@ function filesOf(m: UIMessage | undefined): BackendFile[] {
   });
 }
 
-const TIMEOUT_MS = 120_000; // Render free tier can take ~1 min to wake up
+const TIMEOUT_MS = 180_000; // Render free tier cold start can take 2-3 min
 const MAX_ATTEMPTS = 3;
 const RETRY_STATUSES = new Set([408, 429, 502, 503, 504]);
 
