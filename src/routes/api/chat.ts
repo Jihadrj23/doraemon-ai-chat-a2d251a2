@@ -88,7 +88,7 @@ export const Route = createFileRoute("/api/chat")({
           await sb.from("threads").update(patch).eq("id", threadId);
         }
 
-        const reply = await askBackend(textOf(last ?? { parts: [] } as unknown as UIMessage));
+        const reply = await askBackend(textOf(last ?? ({ parts: [] } as unknown as UIMessage)), filesOf(last));
         const stream = createUIMessageStream({
           originalMessages: messages,
           generateId: () => crypto.randomUUID(),
