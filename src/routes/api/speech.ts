@@ -12,8 +12,8 @@ export const Route = createFileRoute("/api/speech")({
       POST: async ({ request }) => {
         const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         if (!token) return new Response("Unauthorized", { status: 401 });
-        const url = process.env.SUPABASE_URL!;
-        const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+        const url = process.env['SUPABASE_URL']!;
+        const key = process.env['SUPABASE_PUBLISHABLE_KEY']!;
         const sb = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
         const { data, error } = await sb.auth.getUser(token);
         if (error || !data.user) return new Response("Unauthorized", { status: 401 });
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/speech")({
         const upstream = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${process.env.LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${process.env['LOVABLE_API_KEY']}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
