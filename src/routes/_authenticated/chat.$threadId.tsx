@@ -297,6 +297,11 @@ function ChatWindow({
     },
   });
   const busy = status === "submitted" || status === "streaming";
+
+  // Wake the chat server as soon as the chat opens, so the first reply is faster.
+  useEffect(() => {
+    void fetch("https://doraemon-backend-ar3j.onrender.com/", { mode: "no-cors" }).catch(() => {});
+  }, []);
   const turnGate = useRef(createChatTurnGate());
 
   function handleSubmit(msg: PromptInputMessage) {
@@ -400,19 +405,7 @@ function ChatWindow({
               </Message>
             ))
           )}
-          {status === "submitted" && (
-            <div className="flex items-center gap-2 text-sm">
-              <img
-                src={body}
-                alt=""
-                loading="lazy"
-                width={1024}
-                height={1024}
-                className="size-8 rounded object-contain motion-safe:animate-bounce"
-              />
-              <Shimmer>Doraemon is searching his pocket…</Shimmer>
-            </div>
-          )}
+          {status === "submitted" && <WaitingIndicator />}
         </ConversationContent>
         <ConversationScrollButton className="bottom-24" />
       </Conversation>
