@@ -603,7 +603,7 @@ function WaitingIndicator() {
     seconds < 8
       ? "Doraemon is searching his pocket…"
       : seconds < 30
-        ? "Waking Doraemon up… the first reply can take up to a minute"
+        ? "Waking Doraemon up… the first reply can take a few minutes"
         : "Almost there… thanks for waiting";
   return (
     <div role="status" aria-live="polite" className="flex items-center gap-3 text-sm">
