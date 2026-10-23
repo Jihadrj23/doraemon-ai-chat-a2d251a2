@@ -118,9 +118,9 @@ export const Route = createFileRoute("/api/chat")({
           originalMessages: messages,
           generateId: () => crypto.randomUUID(),
           execute: async ({ writer }) => {
-            const reply = await askBackend(textOf(last), filesOf(last), request.signal);
             const id = crypto.randomUUID();
             writer.write({ type: "text-start", id });
+            const reply = await askBackend(textOf(last), filesOf(last), request.signal);
             writer.write({ type: "text-delta", id, delta: reply });
             writer.write({ type: "text-end", id });
           },
