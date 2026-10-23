@@ -48,6 +48,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { createChatTurnGate } from "@/lib/chat-turn";
+import { currentTurnMessages } from "@/lib/chat-request";
 
 export const Route = createFileRoute("/_authenticated/chat/$threadId")({
   head: () => ({
@@ -80,7 +81,7 @@ function ChatPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const threads = useQuery({ queryKey: ["threads"], queryFn: () => listThreads() });
+  const threads = useQuery({ queryKey: ["threads"], queryFn: () => listThreads(), enabled: historyOpen && showHistory });
 
   useEffect(() => {
     if (!initial.found) navigate({ to: "/chat", replace: true });
@@ -267,6 +268,11 @@ function ChatWindow({
       new DefaultChatTransport({
         api: "/api/chat",
         body: { threadId },
+        prepareSendMessagesRequest: ({ messages, body, headers, credentials }) => ({
+          body: { ...body, messages: currentTurnMessages(messages) },
+          headers,
+          credentials,
+        }),
         headers: async (): Promise<Record<string, string>> => {
           const { data } = await supabase.auth.getSession();
           const token = data.session?.access_token;
@@ -405,7 +411,7 @@ function ChatWindow({
               </Message>
             ))
           )}
-          {status === "submitted" && <WaitingIndicator />}
+          {busy && !messages.at(-1)?.parts.some((part) => messages.at(-1)?.role === "assistant" && part.type === "text" && part.text.trim()) && <WaitingIndicator />}
         </ConversationContent>
         <ConversationScrollButton className="bottom-24" />
       </Conversation>
@@ -604,7 +610,7 @@ function WaitingIndicator() {
       ? "Doraemon is searching his pocket…"
       : seconds < 30
         ? "Waking Doraemon up… the first reply can take a few minutes"
-        : "Almost there… thanks for waiting";
+        : "Waiting for Doraemon's server to reply…";
   return (
     <div role="status" aria-live="polite" className="flex items-center gap-3 text-sm">
       <div className="relative size-9 shrink-0">

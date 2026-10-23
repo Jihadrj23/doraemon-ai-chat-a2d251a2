@@ -16,3 +16,5 @@
 - All chat submissions share a synchronous turn gate and transcript rows do not shrink. Why: rapid sends cannot open overlapping turns and long conversations retain chronological, non-overlapping rows.
 - Streaming assistant messages receive an explicit unique message ID before persistence. Why: AI SDK defaults can otherwise overwrite earlier replies under the same stored identifier.
 - Render keep-alive: scheduled ping every 10 min via /api/public/keep-alive (needs published app).
+- Send only the current turn to the chat proxy, since the Python backend consumes no transcript; retain complete history in the UI and saved messages to avoid reuploading old attachments.
+- Return the chat response stream before awaiting Render; keep the waiting indicator visible until text arrives, and log timings without message content to distinguish app overhead from upstream latency.

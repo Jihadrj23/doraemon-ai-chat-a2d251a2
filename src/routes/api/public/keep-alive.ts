@@ -11,9 +11,9 @@ export const Route = createFileRoute("/api/public/keep-alive")({
         if (denied) return denied;
         try {
           const res = await fetch(`${BACKEND_URL}/`, { signal: AbortSignal.timeout(25000) });
-          return Response.json({ ok: true, status: res.status });
+          return Response.json({ ok: res.ok, status: res.status }, { status: res.ok ? 200 : 502 });
         } catch {
-          return Response.json({ ok: false });
+          return Response.json({ ok: false }, { status: 504 });
         }
       },
     },
