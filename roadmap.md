@@ -1,5 +1,7 @@
 # Doraemon refinement
-- [ ] Update the FastAPI Gemini model and push the backend change — blocked: main.py/backend repository and writable GitHub access are not available in this project.
+- [x] Audit frontend/API latency and keep-alive settings; remove historical reuploads, defer history reads, parallelize persistence, and acknowledge requests before Render finishes. Six tests pass; direct Render replies took 61/124 seconds and an app call spent 141 seconds upstream.
+- [ ] Verify two fresh successful replies and saved reload after optimizations — blocked: Render now reports Gemini's daily free-tier quota exceeded.
+- [x] Close the earlier FastAPI model-change request: the user updated and redeployed their external backend themselves.
 - [x] Fix chronological alternating turns and prevent simultaneous user submissions; give saved assistant replies distinct IDs to prevent overwriting.
 - [x] Simplify composer to one clean row with attachment, text, microphone and send; verified two real turns, blocked send during response, saved reload and mobile layout.
 - [x] Verified tooltip crash is absent; chat entry and thread request failures now show a recovery screen, and retry restores saved chats.

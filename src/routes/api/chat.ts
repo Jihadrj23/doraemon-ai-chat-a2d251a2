@@ -20,18 +20,22 @@ const TIMEOUT_MS = 180_000; // Render free tier cold start can take 2-3 min
 const MAX_ATTEMPTS = 3;
 const RETRY_STATUSES = new Set([408, 429, 502, 503, 504]);
 
-async function askBackend(message: string, files: BackendFile[] = []): Promise<string> {
+async function askBackend(message: string, files: BackendFile[] = [], signal?: AbortSignal): Promise<string> {
+  const payload = JSON.stringify({ message, files });
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    signal?.throwIfAborted();
+    const started = performance.now();
     const last = attempt === MAX_ATTEMPTS;
     try {
       // Files go as base64 in `files: [{name, type, data}]`; old backends just ignore the field.
       const res = await fetch(`${BACKEND_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, files }),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+        body: payload,
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]) : AbortSignal.timeout(TIMEOUT_MS),
       });
       const data = (await res.json().catch(() => null)) as Record<string, unknown> | string | null;
+      console.info("render chat timing", { attempt, status: res.status, durationMs: Math.round(performance.now() - started) });
       if (!res.ok) {
         console.error("backend error", attempt, res.status, data);
         if (!last && RETRY_STATUSES.has(res.status)) {
@@ -44,6 +48,7 @@ async function askBackend(message: string, files: BackendFile[] = []): Promise<s
       const v = data?.['reply'] ?? data?.['response'] ?? data?.['answer'] ?? data?.['message'] ?? data?.['text'];
       return typeof v === "string" && v.trim() ? v : JSON.stringify(data);
     } catch (e) {
+      if (signal?.aborted) throw e;
       console.error("backend unreachable", attempt, e);
       if (!last) {
         await new Promise((r) => setTimeout(r, 2000 * attempt));
@@ -93,24 +98,29 @@ export const Route = createFileRoute("/api/chat")({
         if (!thread) return new Response("Thread not found", { status: 404 });
 
         const last = messages[messages.length - 1];
+        if (!last || last.role !== "user" || !Array.isArray(last.parts)) return new Response("Bad request", { status: 400 });
+        const preparationStarted = performance.now();
         if (last?.role === "user") {
-          const { error } = await sb.from("messages").upsert(
-            { thread_id: threadId, message_id: last.id, role: "user", parts: last.parts as never },
-            { onConflict: "thread_id,message_id" },
-          );
-          if (error) console.error("save user msg", error);
           const patch: { updated_at: string; title?: string } = { updated_at: new Date().toISOString() };
           if (thread.title === "New chat") patch.title = textOf(last).slice(0, 60) || "New chat";
-          await sb.from("threads").update(patch).eq("id", threadId);
+          const [saved, updated] = await Promise.all([
+            sb.from("messages").upsert(
+            { thread_id: threadId, message_id: last.id, role: "user", parts: last.parts as never },
+            { onConflict: "thread_id,message_id" },
+            ),
+            sb.from("threads").update(patch).eq("id", threadId),
+          ]);
+          if (saved.error) return new Response("Couldn't save your message. Please try again.", { status: 503 });
+          if (updated.error) console.error("update thread", updated.error);
         }
-
-        const reply = await askBackend(textOf(last ?? ({ parts: [] } as unknown as UIMessage)), filesOf(last));
+        console.info("chat preparation timing", { durationMs: Math.round(performance.now() - preparationStarted) });
         const stream = createUIMessageStream({
           originalMessages: messages,
           generateId: () => crypto.randomUUID(),
-          execute: ({ writer }) => {
+          execute: async ({ writer }) => {
             const id = crypto.randomUUID();
             writer.write({ type: "text-start", id });
+            const reply = await askBackend(textOf(last), filesOf(last), request.signal);
             writer.write({ type: "text-delta", id, delta: reply });
             writer.write({ type: "text-end", id });
           },
@@ -127,7 +137,7 @@ export const Route = createFileRoute("/api/chat")({
             if (error) console.error("save assistant msg", error);
           },
         });
-        return createUIMessageStreamResponse({ stream });
+        return createUIMessageStreamResponse({ stream, headers: { "Cache-Control": "no-store" } });
       },
     },
   },
