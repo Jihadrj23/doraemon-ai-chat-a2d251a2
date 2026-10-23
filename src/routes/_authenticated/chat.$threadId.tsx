@@ -276,15 +276,26 @@ function ChatWindow({
     [threadId],
   );
 
+  const { speakingId, read } = useVoiceReadout();
+  const readRef = useRef(read);
+  readRef.current = read;
+
   const { messages, sendMessage, status, stop } = useChat({
     id: threadId,
     messages: initialMessages,
     transport,
     onError: (e) => toast.error(e.message || "Something went wrong"),
-    onFinish: () => qc.invalidateQueries({ queryKey: ["threads"] }),
+    onFinish: ({ message, isAbort, isError }) => {
+      qc.invalidateQueries({ queryKey: ["threads"] });
+      if (isAbort || isError || message.role !== "assistant") return;
+      const text = message.parts
+        .filter((p) => p.type === "text")
+        .map((p) => p.text)
+        .join("\n")
+        .trim();
+      if (text) void readRef.current(message.id, text);
+    },
   });
-
-  const { speakingId, read } = useVoiceReadout();
   const busy = status === "submitted" || status === "streaming";
   const turnGate = useRef(createChatTurnGate());
 

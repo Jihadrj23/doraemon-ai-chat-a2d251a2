@@ -11,7 +11,7 @@
 
 - Chat replies come from the external Python backend (BACKEND_URL in `src/routes/api/chat.ts`, POST /chat {message}); the route verifies the bearer token and persists UIMessage parts per thread. Why: the user hosts their own model backend.
 - Brand avatars use the body illustration while decorative watermarks use the separate face asset. Why: preserves distinct branding and background roles.
-- Voice readouts use browser speech synthesis on explicit clicks, with one active utterance per chat and cancellation on navigation. Why: avoids sending conversation text to an additional service and prevents overlapping audio.
+- Voice readouts use Lovable AI TTS via /api/speech (authenticated, buffered WAV), auto-played when a reply finishes, one active clip per chat and cancelled on navigation. Why: user chose a natural playful voice with autoplay; real voice cloning is not done.
 - Both chat entry and thread routes use a shared retryable load-error view. Why: failed network reads must not leave a blank chat or silently appear as an empty conversation.
 - All chat submissions share a synchronous turn gate and transcript rows do not shrink. Why: rapid sends cannot open overlapping turns and long conversations retain chronological, non-overlapping rows.
 - Streaming assistant messages receive an explicit unique message ID before persistence. Why: AI SDK defaults can otherwise overwrite earlier replies under the same stored identifier.
