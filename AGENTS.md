@@ -15,3 +15,4 @@
 - Both chat entry and thread routes use a shared retryable load-error view. Why: failed network reads must not leave a blank chat or silently appear as an empty conversation.
 - All chat submissions share a synchronous turn gate and transcript rows do not shrink. Why: rapid sends cannot open overlapping turns and long conversations retain chronological, non-overlapping rows.
 - Streaming assistant messages receive an explicit unique message ID before persistence. Why: AI SDK defaults can otherwise overwrite earlier replies under the same stored identifier.
+- Render keep-alive: scheduled ping every 10 min via /api/public/keep-alive (needs published app).
