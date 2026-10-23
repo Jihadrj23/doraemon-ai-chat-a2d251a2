@@ -348,10 +348,17 @@ function ChatWindow({
                           className="max-h-56 rounded-xl"
                         />
                       );
+                    if (part.type === "file" && part.mediaType?.startsWith("audio/"))
+                      return (
+                        <div key={i} className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">🎵 {part.filename}</span>
+                          <audio controls src={part.url} className="max-w-full" />
+                        </div>
+                      );
                     if (part.type === "file")
                       return (
                         <span key={i} className="text-xs text-muted-foreground">
-                          📎 {part.filename}
+                          {part.mediaType === "application/pdf" ? "📕" : "📄"} {part.filename ?? "file"}
                         </span>
                       );
                     return null;
@@ -403,8 +410,19 @@ function ChatWindow({
         <div className="pointer-events-auto mx-auto max-w-3xl">
           <PromptInput
             onSubmit={handleSubmit}
-            accept="image/*"
+            accept="image/*,audio/*,application/pdf,.pdf,.doc,.docx,.txt,.rtf,.odt,.csv,.xls,.xlsx,.ppt,.pptx,.md,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             multiple
+            maxFiles={5}
+            maxFileSize={10 * 1024 * 1024}
+            onError={(e) =>
+              toast.error(
+                e.code === "max_file_size"
+                  ? "Each file must be 10 MB or smaller."
+                  : e.code === "max_files"
+                    ? "You can attach up to 5 files."
+                    : "Only photos, audio, PDF and document files are supported.",
+              )
+            }
             className="glass-strong relative rounded-[1.75rem] shadow-2xl [&_[data-slot=input-group]]:min-h-14 [&_[data-slot=input-group]]:rounded-[1.75rem] [&_[data-slot=input-group]]:border-glass-border [&_[data-slot=input-group]]:bg-transparent"
           >
             <PromptInputTextarea

@@ -5,12 +5,24 @@ import type { Database } from "@/integrations/supabase/types";
 
 export const BACKEND_URL = "https://doraemon-backend-ar3j.onrender.com";
 
-async function askBackend(message: string): Promise<string> {
+type BackendFile = { name: string; type: string; data: string };
+
+function filesOf(m: UIMessage | undefined): BackendFile[] {
+  if (!m) return [];
+  return m.parts.flatMap((p) => {
+    if (p.type !== "file" || !p.url?.startsWith("data:")) return [];
+    const comma = p.url.indexOf(",");
+    return [{ name: p.filename ?? "file", type: p.mediaType, data: p.url.slice(comma + 1) }];
+  });
+}
+
+async function askBackend(message: string, files: BackendFile[] = []): Promise<string> {
   try {
+    // Files go as base64 in `files: [{name, type, data}]`; old backends just ignore the field.
     const res = await fetch(`${BACKEND_URL}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, files }),
     });
     const data = (await res.json().catch(() => null)) as Record<string, unknown> | string | null;
     if (!res.ok) {
