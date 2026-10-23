@@ -270,8 +270,8 @@ function ChatWindow({
         body: { threadId },
         prepareSendMessagesRequest: ({ messages, body, headers, credentials }) => ({
           body: { ...body, messages: currentTurnMessages(messages) },
-          headers,
-          credentials,
+          ...(headers ? { headers } : {}),
+          ...(credentials ? { credentials } : {}),
         }),
         headers: async (): Promise<Record<string, string>> => {
           const { data } = await supabase.auth.getSession();
